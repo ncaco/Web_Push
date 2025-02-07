@@ -10,4 +10,4 @@ push.setVapidDetails('mailto:test@test.com', vapidKeys.publicKey, vapidKeys.priv
 let sub = {
 };
 
-push.sendNotification(sub, 'test message');
+push.sendNotification(sub, 'test meassge');
