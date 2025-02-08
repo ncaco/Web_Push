@@ -10,6 +10,9 @@
         const API_BASE_URL = window.location.hostname === 'localhost' 
             ? `http://localhost:${PORT}` 
             : '/.netlify/functions';
+        
+
+        console.log("API_BASE_URL : " + API_BASE_URL);
 
         // Firebase SDK import
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.3.0/firebase-app.js";
