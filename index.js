@@ -1,6 +1,7 @@
 const express = require('express')
 const path = require('path')
 const admin = require('firebase-admin')
+const cors = require('cors')
 
 // Firebase 초기화
 const serviceAccount = require('./firebase-key.json')
@@ -9,19 +10,20 @@ admin.initializeApp({
 })
 
 const app = express()
+app.use(cors())
 app.use(express.json())
-app.use(express.static('src/main'))
+app.use(express.static('public'))
 
 // 토큰 저장소 (실제 구현시에는 데이터베이스 사용 권장)
 const tokens = new Map();
 
 // 메인 페이지 라우트
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, '', '', 'index.html'))
+    res.sendFile(path.join(__dirname, '', 'index.html'))
 })
 
 // 등록된 모든 토큰 조회
-app.get('/tokens', (req, res) => {
+app.get('/get-tokens', (req, res) => {
     const tokenList = Array.from(tokens.entries()).map(([id, token]) => ({
         id,
         token
@@ -33,7 +35,7 @@ app.get('/tokens', (req, res) => {
 app.post('/register-token', async (req, res) => {
     try {
         const { token } = req.body;
-        const userId = `User_${Date.now()}`; // 임시 사용자 ID 생성
+        const userId = `User_${Date.now()}`;
         tokens.set(userId, token);
         console.log('새로운 사용자 등록:', userId);
         console.log('현재 등록된 사용자 수:', tokens.size);

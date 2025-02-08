@@ -5,6 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FCM 푸시 테스트</title>
     <script type="module">
+        // API 기본 URL 설정
+        const API_BASE_URL = window.location.hostname === 'localhost' 
+            ? 'http://localhost:5000' 
+            : '/.netlify/functions';
+
         // Firebase SDK import
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.3.0/firebase-app.js";
         import { getMessaging, getToken, onMessage } from "https://www.gstatic.com/firebasejs/11.3.0/firebase-messaging.js";
@@ -33,10 +38,10 @@
                 if (permission === 'granted') {
                     console.log('FCM 토큰 요청 중...');
                     const token = await getToken(messaging);
-                    console.log('FCM 토큰 발급 완료:', token.slice(-10)); // 보안을 위해 마지막 10자리만
+                    console.log('FCM 토큰 발급 완료:', token.slice(-10));
                     
                     console.log('서버에 토큰 등록 중...');
-                    const response = await fetch('/register-token', {
+                    const response = await fetch(`${API_BASE_URL}/register-token`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -58,7 +63,7 @@
         async function updateUserList() {
             console.log('사용자 목록 업데이트 중...');
             try {
-                const response = await fetch('/tokens');
+                const response = await fetch(`${API_BASE_URL}/get-tokens`);
                 const users = await response.json();
                 console.log('현재 접속 중인 사용자:', users.length, '명');
                 
@@ -95,7 +100,7 @@
             
             console.log('푸시 메시지 전송 중...', userId, '에게');
             try {
-                const response = await fetch('/send-push', {
+                const response = await fetch(`${API_BASE_URL}/send-push`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
