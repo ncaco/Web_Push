@@ -2,3 +2,6 @@ node_modules
 firebase-key.json
 .env
 .env.local
+
+# Local Netlify folder
+.netlify

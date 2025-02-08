@@ -135,7 +135,7 @@ app.post('/send-push', async (req, res) => {
 });
 
 // 초기 접속 처리
-app.post('/api/init-session', async (req, res) => {
+app.post('/init-session', async (req, res) => {
     try {
         const { sessionId } = req.body;
         
@@ -155,20 +155,15 @@ app.post('/api/init-session', async (req, res) => {
                 sessionId,
                 active: true,
                 userAgent: req.headers['user-agent'],
-                ip: req.ip,
-                lastAccess: {
-                    timestamp,
-                    path: req.path
-                }
+                ip: req.ip
             }),
-            // 빈 토큰 정보 생성 (나중에 업데이트됨)
+            // 빈 토큰 정보 생성
             tokensRef.child(userId).set({
                 createdAt: timestamp,
                 updatedAt: timestamp
             })
         ]);
 
-        console.log('새 사용자 등록 완료:', userId);
         res.json({ 
             userId,
             message: '세션이 초기화되었습니다.' 
@@ -183,7 +178,7 @@ app.post('/api/init-session', async (req, res) => {
     }
 });
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 8888;
 
 app.listen(PORT, () => {
     console.log(`서버가 http://localhost:${PORT} 에서 실행 중입니다.`)
