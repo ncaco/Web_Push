@@ -19,7 +19,7 @@ const tokens = new Map();
 
 // 메인 페이지 라우트
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, '', 'index.html'))
+    res.sendFile(path.join(__dirname, 'public', 'index.html'))
 })
 
 // 등록된 모든 토큰 조회
