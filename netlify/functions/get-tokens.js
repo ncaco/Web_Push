@@ -1,11 +1,31 @@
 const { usersRef, tokensRef } = require('./utils/firebase');
 
 exports.handler = async (event) => {
-    if (event.httpMethod !== 'GET') {
-        return { statusCode: 405, body: 'Method Not Allowed' };
-    }
-
     try {
+        // CORS 헤더 추가
+        const headers = {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Headers': 'Content-Type',
+            'Content-Type': 'application/json'
+        };
+
+        // OPTIONS 요청 처리
+        if (event.httpMethod === 'OPTIONS') {
+            return {
+                statusCode: 200,
+                headers,
+                body: ''
+            };
+        }
+
+        if (event.httpMethod !== 'GET') {
+            return {
+                statusCode: 405,
+                headers,
+                body: JSON.stringify({ error: 'Method Not Allowed' })
+            };
+        }
+
         const [usersSnapshot, tokensSnapshot] = await Promise.all([
             usersRef.once('value'),
             tokensRef.once('value')
@@ -46,10 +66,7 @@ exports.handler = async (event) => {
 
         return {
             statusCode: 200,
-            headers: {
-                'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*'
-            },
+            headers,
             body: JSON.stringify(userList)
         };
     } catch (error) {
@@ -57,10 +74,13 @@ exports.handler = async (event) => {
         return {
             statusCode: 500,
             headers: {
-                'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*'
+                'Access-Control-Allow-Origin': '*',
+                'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ error: '사용자 목록 조회에 실패했습니다.' })
+            body: JSON.stringify({ 
+                error: '사용자 목록 조회에 실패했습니다.',
+                details: error.message 
+            })
         };
     }
 }; 

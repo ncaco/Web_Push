@@ -77,8 +77,24 @@ tokensRef.on('child_added', (snapshot) => {
     console.log('새 토큰 추가됨:', snapshot.key);
 });
 
+// 데이터베이스 연결 상태 확인
+const checkConnection = async () => {
+    try {
+        await db.ref('.info/connected').once('value');
+        console.log('Firebase 연결 확인됨');
+        return true;
+    } catch (error) {
+        console.error('Firebase 연결 실패:', error);
+        return false;
+    }
+};
+
+// 초기 연결 확인
+checkConnection();
+
 module.exports = {
     admin,
     usersRef,
-    tokensRef
+    tokensRef,
+    checkConnection
 }; 
