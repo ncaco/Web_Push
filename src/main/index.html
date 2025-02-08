@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FCM 푸시 테스트</title>
+    <script type="module">
+        // Firebase SDK import
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.3.0/firebase-app.js";
+        import { getMessaging, getToken, onMessage } from "https://www.gstatic.com/firebasejs/11.3.0/firebase-messaging.js";
+
+        // Firebase 설정
+        const firebaseConfig = {
+            apiKey: "AIzaSyDrpO0vDYn8nldMbV37mI49Yemk2VGE3X8",
+            authDomain: "web-push-fe250.firebaseapp.com",
+            projectId: "web-push-fe250",
+            storageBucket: "web-push-fe250.firebasestorage.app",
+            messagingSenderId: "475730596102",
+            appId: "1:475730596102:web:954947b2d9be8aa5fc4e87"
+        };
+
+        // Firebase 초기화
+        const app = initializeApp(firebaseConfig);
+        const messaging = getMessaging(app);
+        console.log('Firebase 초기화 완료');
+
+        // 알림 권한 요청
+        async function requestNotificationPermission() {
+            console.log('알림 권한 요청 시작...');
+            try {
+                const permission = await Notification.requestPermission();
+                console.log('알림 권한 상태:', permission);
+                if (permission === 'granted') {
+                    console.log('FCM 토큰 요청 중...');
+                    const token = await getToken(messaging);
+                    console.log('FCM 토큰 발급 완료:', token.slice(-10)); // 보안을 위해 마지막 10자리만
+                    
+                    console.log('서버에 토큰 등록 중...');
+                    const response = await fetch('/register-token', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ token })
+                    });
+                    const data = await response.json();
+                    console.log('서버 응답:', data);
+                    localStorage.setItem('userId', data.userId);
+                    console.log('사용자 ID 저장됨:', data.userId);
+                    updateUserList();
+                }
+            } catch (err) {
+                console.error('알림 권한 요청 실패:', err);
+            }
+        }
+
+        // 사용자 목록 업데이트
+        async function updateUserList() {
+            console.log('사용자 목록 업데이트 중...');
+            try {
+                const response = await fetch('/tokens');
+                const users = await response.json();
+                console.log('현재 접속 중인 사용자:', users.length, '명');
+                
+                const select = document.getElementById('select');
+                select.innerHTML = '<option value="">선택</option>';
+                
+                users.forEach(user => {
+                    const option = document.createElement('option');
+                    option.value = user.id;
+                    option.textContent = user.id;
+                    if (user.id === localStorage.getItem('userId')) {
+                        option.textContent += ' (나)';
+                        console.log('현재 사용자:', user.id);
+                    }
+                    select.appendChild(option);
+                });
+            } catch (err) {
+                console.error('사용자 목록 조회 실패:', err);
+            }
+        }
+
+        // 주기적으로 사용자 목록 업데이트 (10초마다)
+        setInterval(updateUserList, 10000);
+
+        // 푸시 메시지 전송
+        document.getElementById('btn').addEventListener('click', async () => {
+            const select = document.getElementById('select');
+            const userId = select.value;
+            
+            if (!userId) {
+                alert('사용자를 선택해주세요.');
+                return;
+            }
+            
+            console.log('푸시 메시지 전송 중...', userId, '에게');
+            try {
+                const response = await fetch('/send-push', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ userId })
+                });
+                const result = await response.json();
+                console.log('푸시 전송 결과:', result);
+                alert('푸시 메시지가 전송되었습니다.');
+            } catch (err) {
+                console.error('푸시 전송 실패:', err);
+                alert('푸시 전송에 실패했습니다.');
+            }
+        });
+
+        // 포그라운드 메시지 수신
+        onMessage(messaging, (payload) => {
+            console.log('포그라운드 메시지 수신:', payload);
+            new Notification(payload.notification.title, {
+                body: payload.notification.body
+            });
+        });
+
+        // 페이지 로드시 권한 요청
+        console.log('페이지 로드됨, 권한 요청 시작');
+        requestNotificationPermission();
+    </script>
+</head>
+<body>
+    <h1>FCM 푸시 테스트</h1>
+
+    <select id="select">
+        <option value="">선택</option>
+    </select>
+
+    <button id="btn">전송</button>
+</body>
+</html>
