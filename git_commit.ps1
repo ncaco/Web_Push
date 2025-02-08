@@ -15,4 +15,4 @@ git status
 git commit -m "$message"
 git push origin main -u
 
-Write-Host "깃 커밋 및 푸시 완료!" -Encoding UTF8
+Write-Host "Git Commit and Push Completed!" -ForegroundColor Green
