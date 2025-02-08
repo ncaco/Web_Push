@@ -2,6 +2,9 @@ const admin = require('firebase-admin');
 
 // Firebase 초기화 로깅 추가
 console.log('Firebase 초기화 시작...');
+console.log('Project ID:', process.env.FIREBASE_PROJECT_ID);
+console.log('Client Email:', process.env.FIREBASE_CLIENT_EMAIL);
+// private key는 보안상 로깅하지 않음
 
 if (!admin.apps.length) {
     try {
