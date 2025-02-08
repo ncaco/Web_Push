@@ -77,6 +77,8 @@ app.post('/send-push', async (req, res) => {
     }
 })
 
-app.listen(5000, () => {
-    console.log('서버가 http://localhost:5000 에서 실행 중입니다.')
+const PORT = process.env.PORT || 5000;  // 환경변수에서 포트를 가져오거나 5000 사용
+
+app.listen(PORT, () => {
+    console.log(`서버가 http://localhost:${PORT} 에서 실행 중입니다.`)
 })
