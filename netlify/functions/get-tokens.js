@@ -1,4 +1,4 @@
-const { usersRef, tokensRef } = require('./utils/firebase');
+const { admin, usersRef, tokensRef } = require('./utils/firebase');
 
 exports.handler = async (event) => {
     const headers = {
@@ -16,14 +16,23 @@ exports.handler = async (event) => {
         const users = usersSnapshot.val() || {};
         const tokens = tokensSnapshot.val() || {};
         
+        const now = Date.now();
+        const ONE_DAY = 24 * 60 * 60 * 1000;
+        
         const userList = Object.entries(users)
-            .filter(([id]) => tokens[id]?.token)
+            .filter(([id, user]) => {
+                const isRecent = now - user.lastSeen < ONE_DAY;
+                const hasToken = tokens[id]?.token;
+                return isRecent && hasToken;
+            })
             .map(([id, user]) => ({
                 id,
                 token: tokens[id].token,
-                active: user.active || false,
-                lastSeen: user.lastSeen || 0
-            }));
+                active: user.active,
+                lastSeen: user.lastSeen,
+                createdAt: user.createdAt
+            }))
+            .sort((a, b) => b.lastSeen - a.lastSeen);
 
         return {
             statusCode: 200,
@@ -35,7 +44,7 @@ exports.handler = async (event) => {
         return {
             statusCode: 500,
             headers,
-            body: JSON.stringify({ error: error.message })
+            body: JSON.stringify({ error: '사용자 목록 조회에 실패했습니다.' })
         };
     }
 }; 

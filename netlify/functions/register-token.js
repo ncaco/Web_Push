@@ -80,7 +80,7 @@ exports.handler = async (event) => {
             },
             body: JSON.stringify({
                 userId,
-                message: existingUserId ? '사용자 정보가 업데이트되었습니다.' : '새 사용자가 등록되었습니다.'
+                message: existingUserId ? '토큰이 업데이트되었습니다.' : '토큰이 등록되었습니다.'
             })
         };
     } catch (error) {
@@ -92,7 +92,7 @@ exports.handler = async (event) => {
                 'Access-Control-Allow-Origin': '*'
             },
             body: JSON.stringify({ 
-                error: '사용자 등록에 실패했습니다.',
+                error: '토큰 등록에 실패했습니다.',
                 details: error.message 
             })
         };
