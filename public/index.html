@@ -128,11 +128,15 @@
 
         // 사용자 목록 업데이트
         async function updateUserList() {
-            console.log('사용자 목록 업데이트 중...');
             try {
                 const response = await fetch(`${API_BASE_URL}/get-tokens`);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
                 const users = await response.json();
-                console.log('현재 접속 중인 사용자:', users.length, '명');
+                if (!Array.isArray(users)) {
+                    throw new Error('Invalid response format');
+                }
                 
                 const select = document.getElementById('select');
                 select.innerHTML = '<option value="">선택</option>';
@@ -143,7 +147,6 @@
                     option.textContent = user.id;
                     if (user.id === localStorage.getItem('userId')) {
                         option.textContent += ' (나)';
-                        console.log('현재 사용자:', user.id);
                     }
                     select.appendChild(option);
                 });
