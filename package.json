@@ -6,7 +6,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node index.js",
-    "dev": "nodemon index.js"
+    "dev": "netlify dev",
+    "build": "netlify build"
   },
   "keywords": [],
   "author": "",
@@ -15,7 +16,7 @@
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
-    "firebase-admin": "^13.1.0",
+    "firebase-admin": "^11.11.1",
     "web-push": "^3.6.7"
   },
   "devDependencies": {

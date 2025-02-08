@@ -80,17 +80,27 @@ tokensRef.on('child_added', (snapshot) => {
 // 데이터베이스 연결 상태 확인
 const checkConnection = async () => {
     try {
-        await db.ref('.info/connected').once('value');
-        console.log('Firebase 연결 확인됨');
-        return true;
+        const snapshot = await db.ref('.info/connected').once('value');
+        const isConnected = snapshot.val() === true;
+        console.log('Firebase 연결 상태:', isConnected ? '연결됨' : '연결 끊김');
+        return isConnected;
     } catch (error) {
-        console.error('Firebase 연결 실패:', error);
+        console.error('Firebase 연결 확인 실패:', error);
         return false;
     }
 };
 
+// 연결 상태 모니터링
+db.ref('.info/connected').on('value', (snapshot) => {
+    console.log('Database 연결 상태 변경:', snapshot.val() ? '연결됨' : '연결 끊김');
+});
+
 // 초기 연결 확인
-checkConnection();
+checkConnection().then(isConnected => {
+    if (!isConnected) {
+        console.error('초기 Firebase 연결 실패');
+    }
+});
 
 module.exports = {
     admin,
