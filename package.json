@@ -7,7 +7,7 @@
     "start": "node index.js",
     "dev": "nodemon index.js",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "cp -r public/* dist/"
+    "build": "if not exist dist mkdir dist && xcopy /E /I public\\* dist\\"
   },
   "keywords": [],
   "author": "",
