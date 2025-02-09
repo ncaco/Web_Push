@@ -1,0 +1,26 @@
+{
+  "rules": {
+    "users": {
+      ".read": true,
+      ".write": true,
+      "$userId": {
+        ".read": true,
+        ".write": true,
+        ".validate": "newData.hasChildren(['sessionId', 'lastSeen', 'active'])",
+        "sessionId": { ".validate": "newData.isString()" },
+        "lastSeen": { ".validate": "newData.isNumber() && newData.val() <= now" },
+        "active": { ".validate": "newData.isBoolean()" }
+      }
+    },
+    "tokens": {
+      ".read": true,
+      ".write": true,
+      "$userId": {
+        ".read": true,
+        ".write": true,
+        ".validate": "newData.hasChildren(['token'])",
+        "token": { ".validate": "newData.isString()" }
+      }
+    }
+  }
+} 
