@@ -268,7 +268,7 @@ async function sendPushNotification(userId, title, body) {
         const { token } = snapshot.val();
 
         // 서버에 푸시 메시지 발송 요청
-        const response = await fetch('/api/send-push', {
+        const response = await fetch('/.netlify/functions/send-push', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -282,7 +282,8 @@ async function sendPushNotification(userId, title, body) {
         });
 
         if (!response.ok) {
-            throw new Error('푸시 메시지 발송에 실패했습니다.');
+            const errorData = await response.json();
+            throw new Error(errorData.error || '푸시 메시지 발송에 실패했습니다.');
         }
 
         alert('푸시 메시지가 발송되었습니다.');

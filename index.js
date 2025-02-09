@@ -90,6 +90,55 @@ app.post('/api/send-push', async (req, res) => {
     }
 });
 
+// Netlify Functions 엔드포인트 에뮬레이션
+app.post('/.netlify/functions/send-push', async (req, res) => {
+    try {
+        const { token, title, body, userId } = req.body;
+
+        if (!token || !title || !body) {
+            return res.status(400).json({ error: '필수 파라미터가 누락되었습니다.' });
+        }
+
+        // 메시지 구성
+        const message = {
+            notification: {
+                title,
+                body
+            },
+            token,
+            webpush: {
+                notification: {
+                    icon: '/icon.png',
+                    badge: '/icon.png',
+                    requireInteraction: true,
+                    actions: [
+                        {
+                            action: 'open',
+                            title: '열기'
+                        },
+                        {
+                            action: 'close',
+                            title: '닫기'
+                        }
+                    ]
+                },
+                fcmOptions: {
+                    link: '/'
+                }
+            }
+        };
+
+        // FCM으로 메시지 발송
+        const response = await admin.messaging().send(message);
+        console.log('푸시 메시지 발송 성공:', response);
+
+        res.json({ success: true, messageId: response });
+    } catch (error) {
+        console.error('푸시 메시지 발송 실패:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // 기본 라우트
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
