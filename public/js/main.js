@@ -267,6 +267,8 @@ function showUserStatus(userId) {
 // 푸시 메시지 발송
 async function sendPushNotification(userId, title, body, url, linkType) {
     try {
+        console.log('Sending push notification:', { userId, title, body, url, linkType });
+        
         const response = await fetch('/.netlify/functions/send-push', {
             method: 'POST',
             headers: {
@@ -274,9 +276,9 @@ async function sendPushNotification(userId, title, body, url, linkType) {
             },
             body: JSON.stringify({
                 userId,
-                notification: {
-                    title,
-                    body,
+                title,
+                body,
+                data: {
                     url,
                     linkType
                 }

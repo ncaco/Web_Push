@@ -44,8 +44,8 @@ app.get('/api/vapid-key', (req, res) => {
 // Netlify Functions 엔드포인트
 app.post('/.netlify/functions/send-push', async (req, res) => {
     try {
-        const { userId, notification } = req.body;
-        const { title, body, url, linkType } = notification;
+        const { userId, title, body, data } = req.body;
+        console.log('Received push request:', req.body);
 
         if (!userId || !title || !body) {
             return res.status(400).json({ error: '필수 파라미터가 누락되었습니다.' });
@@ -66,8 +66,8 @@ app.post('/.netlify/functions/send-push', async (req, res) => {
                 body
             },
             data: {
-                url: url || '/',
-                linkType: linkType || 'current'
+                url: data?.url || '/',
+                linkType: data?.linkType || 'current'
             },
             token,
             webpush: {
