@@ -79,7 +79,7 @@ exports.handler = async function(event, context) {
                 title,
                 body
             },
-            userId,
+            token,
             webpush: {
                 notification: {
                     icon: '/icon.png',
