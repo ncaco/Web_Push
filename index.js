@@ -48,19 +48,25 @@ app.post('/.netlify/functions/send-push', async (req, res) => {
         console.log('Received push request:', req.body);
 
         if (!userId || !title || !body) {
-            return res.status(400).json({ error: '필수 파라미터가 누락되었습니다.', body:req.body });
+            return res.status(400).json({ error: '필수 파라미터가 누락되었습니다.', body: req.body });
         }
 
         // 사용자의 FCM 토큰 가져오기
         const tokenSnapshot = await admin.database().ref(`tokens/${userId}`).once('value');
+        console.log('Token snapshot:', tokenSnapshot.val());
+        
         if (!tokenSnapshot.exists()) {
             return res.status(404).json({ error: '사용자의 FCM 토큰이 없습니다.' });
         }
 
         const { token } = tokenSnapshot.val();
+        if (!token) {
+            return res.status(404).json({ error: 'FCM 토큰이 유효하지 않습니다.' });
+        }
 
         // 메시지 구성
         const message = {
+            token: token, // 토큰을 최상위 레벨에 배치
             notification: {
                 title,
                 body
@@ -69,7 +75,6 @@ app.post('/.netlify/functions/send-push', async (req, res) => {
                 url: data?.url || '/',
                 linkType: data?.linkType || 'current'
             },
-            token,
             webpush: {
                 notification: {
                     icon: '/icon.png',
@@ -89,6 +94,8 @@ app.post('/.netlify/functions/send-push', async (req, res) => {
             }
         };
 
+        console.log('Sending FCM message:', message);
+
         // FCM으로 메시지 발송
         const response = await admin.messaging().send(message);
         console.log('푸시 메시지 발송 성공:', response);
@@ -96,7 +103,10 @@ app.post('/.netlify/functions/send-push', async (req, res) => {
         res.json({ success: true, messageId: response });
     } catch (error) {
         console.error('푸시 메시지 발송 실패:', error);
-        res.status(500).json({ error: error.message || '푸시 메시지 발송에 실패했습니다.' });
+        res.status(500).json({ 
+            error: error.message || '푸시 메시지 발송에 실패했습니다.',
+            details: error.stack
+        });
     }
 });
 
