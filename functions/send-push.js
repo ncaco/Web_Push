@@ -63,13 +63,13 @@ exports.handler = async function(event, context) {
     }
 
     try {
-        const { token, title, body, userId } = JSON.parse(event.body);
+        const { title, body, userId } = JSON.parse(event.body);
 
-        if (!token || !title || !body) {
+        if (!userId || !title || !body) {
             return {
                 statusCode: 400,
                 headers,
-                body: JSON.stringify({ error: '필수 파라미터가 누락되었습니다.', data:event.body })
+                body: JSON.stringify({ error: '필수 파라미터가 누락되었습니다.'})
             };
         }
 
@@ -79,7 +79,7 @@ exports.handler = async function(event, context) {
                 title,
                 body
             },
-            token,
+            userId,
             webpush: {
                 notification: {
                     icon: '/icon.png',
