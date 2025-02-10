@@ -33,6 +33,23 @@
                         <label for="pushBody">내용</label>
                         <textarea id="pushBody" placeholder="푸시 메시지 내용을 입력하세요"></textarea>
                     </div>
+                    <div class="form-group">
+                        <label for="pushUrl">바로가기 링크</label>
+                        <input type="url" id="pushUrl" placeholder="https://example.com">
+                    </div>
+                    <div class="form-group">
+                        <label>링크 형태</label>
+                        <div class="radio-group">
+                            <label>
+                                <input type="radio" name="linkType" value="current" checked>
+                                현재창
+                            </label>
+                            <label>
+                                <input type="radio" name="linkType" value="new">
+                                새창
+                            </label>
+                        </div>
+                    </div>
                     <button id="sendPush" class="push-button">발송</button>
                 </div>
             </div>

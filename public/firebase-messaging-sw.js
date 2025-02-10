@@ -42,7 +42,10 @@ self.addEventListener('push', function(event) {
                 body: data.notification.body,
                 icon: '/icon.png',
                 badge: '/icon.png',
-                data: data.data,
+                data: {
+                    url: data.data?.url || '/',
+                    linkType: data.data?.linkType || 'current'
+                },
                 requireInteraction: true,
                 actions: [
                     {
@@ -68,6 +71,7 @@ self.addEventListener('push', function(event) {
 // 알림 클릭 처리
 self.addEventListener('notificationclick', function(event) {
     console.log('알림 클릭:', event);
+    console.log('알림 데이터:', event.notification.data);
     
     event.notification.close();
     
@@ -75,19 +79,35 @@ self.addEventListener('notificationclick', function(event) {
         return;
     }
     
-    const urlToOpen = event.notification.data?.url || '/';
+    const { url, linkType } = event.notification.data;
     
     event.waitUntil(
         clients.matchAll({
             type: 'window',
             includeUncontrolled: true
         }).then(function(clientList) {
-            for (let client of clientList) {
-                if (client.url === urlToOpen && 'focus' in client) {
-                    return client.focus();
+            // 현재 활성화된 창 찾기
+            const activeClient = clientList.find(client => 
+                client.visibilityState === 'visible' || client.focused
+            );
+
+            if (linkType === 'current' && activeClient) {
+                // 현재 창이 있고 현재 창으로 열기가 선택된 경우
+                if (url.startsWith('/') || url.startsWith(self.registration.scope)) {
+                    // 내부 URL인 경우 navigate 사용
+                    return activeClient.navigate(url).then(client => client.focus());
+                } else {
+                    // 외부 URL인 경우 location 변경
+                    return activeClient.focus().then(() => {
+                        activeClient.postMessage({
+                            type: 'NAVIGATE',
+                            url: url
+                        });
+                    });
                 }
             }
-            return clients.openWindow(urlToOpen);
+            // 새 창으로 열기
+            return clients.openWindow(url);
         })
     );
 });
@@ -102,7 +122,10 @@ if (messaging) {
             body: payload.notification.body,
             icon: '/icon.png',
             badge: '/icon.png',
-            data: payload.data,
+            data: {
+                url: payload.data?.url || '/',
+                linkType: payload.data?.linkType || 'current'
+            },
             requireInteraction: true,
             actions: [
                 {
@@ -118,4 +141,24 @@ if (messaging) {
         
         return self.registration.showNotification(notificationTitle, notificationOptions);
     });
-} 
+}
+
+const handleMessageOpen = (messageId) => {
+    // 새 창의 크기와 위치 설정
+    const width = 800;
+    const height = 600;
+    const left = (window.screen.width - width) / 2;
+    const top = (window.screen.height - height) / 2;
+
+    // 새 창 열기
+    window.open(
+        `/messages/${messageId}`,
+        '_blank',
+        `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes`
+    );
+};
+
+// 메시지 수신 처리
+self.addEventListener('message', function(event) {
+    console.log('Message received:', event.data);
+}); 

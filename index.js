@@ -41,69 +41,33 @@ app.get('/api/vapid-key', (req, res) => {
     });
 });
 
-// 푸시 메시지 발송 엔드포인트
-app.post('/api/send-push', async (req, res) => {
-    try {
-        const { token, title, body, userId } = req.body;
-
-        if (!token || !title || !body) {
-            return res.status(400).json({ error: '필수 파라미터가 누락되었습니다.' });
-        }
-
-        // 메시지 구성
-        const message = {
-            notification: {
-                title,
-                body
-            },
-            token,
-            webpush: {
-                notification: {
-                    icon: '/icon.png',
-                    badge: '/icon.png',
-                    requireInteraction: true,
-                    actions: [
-                        {
-                            action: 'open',
-                            title: '열기'
-                        },
-                        {
-                            action: 'close',
-                            title: '닫기'
-                        }
-                    ]
-                },
-                fcmOptions: {
-                    link: '/'
-                }
-            }
-        };
-
-        // FCM으로 메시지 발송
-        const response = await admin.messaging().send(message);
-        console.log('푸시 메시지 발송 성공:', response);
-
-        res.json({ success: true, messageId: response });
-    } catch (error) {
-        console.error('푸시 메시지 발송 실패:', error);
-        res.status(500).json({ error: error.message });
-    }
-});
-
-// Netlify Functions 엔드포인트 에뮬레이션
+// Netlify Functions 엔드포인트
 app.post('/.netlify/functions/send-push', async (req, res) => {
     try {
-        const { token, title, body, userId } = req.body;
+        const { userId, notification } = req.body;
+        const { title, body, url, linkType } = notification;
 
-        if (!token || !title || !body) {
+        if (!userId || !title || !body) {
             return res.status(400).json({ error: '필수 파라미터가 누락되었습니다.' });
         }
+
+        // 사용자의 FCM 토큰 가져오기
+        const tokenSnapshot = await admin.database().ref(`tokens/${userId}`).once('value');
+        if (!tokenSnapshot.exists()) {
+            return res.status(404).json({ error: '사용자의 FCM 토큰이 없습니다.' });
+        }
+
+        const { token } = tokenSnapshot.val();
 
         // 메시지 구성
         const message = {
             notification: {
                 title,
                 body
+            },
+            data: {
+                url: url || '/',
+                linkType: linkType || 'current'
             },
             token,
             webpush: {
@@ -121,9 +85,6 @@ app.post('/.netlify/functions/send-push', async (req, res) => {
                             title: '닫기'
                         }
                     ]
-                },
-                fcmOptions: {
-                    link: '/'
                 }
             }
         };
@@ -135,7 +96,7 @@ app.post('/.netlify/functions/send-push', async (req, res) => {
         res.json({ success: true, messageId: response });
     } catch (error) {
         console.error('푸시 메시지 발송 실패:', error);
-        res.status(500).json({ error: error.message });
+        res.status(500).json({ error: error.message || '푸시 메시지 발송에 실패했습니다.' });
     }
 });
 

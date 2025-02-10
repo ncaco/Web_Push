@@ -35,6 +35,7 @@ const activeStatus = document.getElementById('activeStatus');
 const lastSeen = document.getElementById('lastSeen');
 const pushTitle = document.getElementById('pushTitle');
 const pushBody = document.getElementById('pushBody');
+const pushUrl = document.getElementById('pushUrl');
 const sendPushButton = document.getElementById('sendPush');
 
 // 서비스 워커 등록
@@ -45,6 +46,15 @@ async function registerServiceWorker() {
                 scope: '/'
             });
             console.log('서비스 워커가 등록되었습니다:', registration);
+
+            // 서비스 워커 메시지 수신 처리
+            navigator.serviceWorker.addEventListener('message', function(event) {
+                console.log('Message from service worker:', event.data);
+                if (event.data.type === 'NAVIGATE') {
+                    window.location.href = event.data.url;
+                }
+            });
+
             return registration;
         }
         throw new Error('서비스 워커를 지원하지 않는 브라우저입니다.');
@@ -255,29 +265,21 @@ function showUserStatus(userId) {
 }
 
 // 푸시 메시지 발송
-async function sendPushNotification(userId, title, body) {
+async function sendPushNotification(userId, title, body, url, linkType) {
     try {
-        // 사용자의 FCM 토큰 가져오기
-        const tokenRef = ref(db, `tokens/${userId}`);
-        const snapshot = await get(tokenRef);
-        
-        if (!snapshot.exists()) {
-            throw new Error('사용자의 FCM 토큰이 없습니다.');
-        }
-
-        const { token } = snapshot.val();
-
-        // 서버에 푸시 메시지 발송 요청
         const response = await fetch('/.netlify/functions/send-push', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                token,
-                title,
-                body,
-                userId
+                userId,
+                notification: {
+                    title,
+                    body,
+                    url,
+                    linkType
+                }
             })
         });
 
@@ -287,11 +289,10 @@ async function sendPushNotification(userId, title, body) {
         }
 
         alert('푸시 메시지가 발송되었습니다.');
-        
         // 입력 필드 초기화
         pushTitle.value = '';
         pushBody.value = '';
-        
+        pushUrl.value = '';
     } catch (error) {
         console.error('푸시 메시지 발송 실패:', error);
         alert(error.message);
@@ -303,27 +304,24 @@ userSelect.addEventListener('change', (e) => {
     showUserStatus(e.target.value);
 });
 
-sendPushButton.addEventListener('click', async () => {
+sendPushButton.addEventListener('click', () => {
     const selectedUserId = userSelect.value;
     const title = pushTitle.value.trim();
     const body = pushBody.value.trim();
-    
+    const url = pushUrl.value.trim();
+    const linkType = document.querySelector('input[name="linkType"]:checked').value;
+
     if (!selectedUserId) {
-        alert('메시지를 받을 사용자를 선택해주세요.');
+        alert('사용자를 선택해주세요.');
         return;
     }
-    
+
     if (!title || !body) {
-        alert('제목과 내용을 모두 입력해주세요.');
+        alert('제목과 내용을 입력해주세요.');
         return;
     }
-    
-    sendPushButton.disabled = true;
-    try {
-        await sendPushNotification(selectedUserId, title, body);
-    } finally {
-        sendPushButton.disabled = false;
-    }
+
+    sendPushNotification(selectedUserId, title, body, url, linkType);
 });
 
 // 초기화
