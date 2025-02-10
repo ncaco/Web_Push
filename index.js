@@ -48,7 +48,7 @@ app.post('/.netlify/functions/send-push', async (req, res) => {
         console.log('Received push request:', req.body);
 
         if (!userId || !title || !body) {
-            return res.status(400).json({ error: '필수 파라미터가 누락되었습니다.' });
+            return res.status(400).json({ error: '필수 파라미터가 누락되었습니다.', body:req.body });
         }
 
         // 사용자의 FCM 토큰 가져오기
