@@ -69,7 +69,7 @@ exports.handler = async function(event, context) {
             return {
                 statusCode: 400,
                 headers,
-                body: JSON.stringify({ error: '필수 파라미터가 누락되었습니다.' })
+                body: JSON.stringify({ error: '필수 파라미터가 누락되었습니다.', data:event.body })
             };
         }
 
