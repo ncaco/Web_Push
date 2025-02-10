@@ -63,7 +63,7 @@ exports.handler = async function(event, context) {
     }
 
     try {
-        const { title, body, userId } = JSON.parse(event.body);
+        const { token, title, body, userId } = JSON.parse(event.body);
 
         if (!userId || !title || !body) {
             return {
