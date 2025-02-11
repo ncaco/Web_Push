@@ -63,24 +63,50 @@ exports.handler = async function(event, context) {
     }
 
     try {
-        const { token, title, body, userId } = JSON.parse(event.body);
+        const { userId, title, body, data } = JSON.parse(event.body);
+        console.log('Received request:', { userId, title, body, data });
 
         if (!userId || !title || !body) {
             return {
                 statusCode: 400,
                 headers,
-                body: JSON.stringify({ error: '필수 파라미터가 누락되었습니다.'})
+                body: JSON.stringify({ error: '필수 파라미터가 누락되었습니다.' })
+            };
+        }
+
+        // 사용자의 FCM 토큰 가져오기
+        const tokenSnapshot = await admin.database().ref(`tokens/${userId}`).once('value');
+        console.log('Token data:', tokenSnapshot.val());
+
+        if (!tokenSnapshot.exists()) {
+            return {
+                statusCode: 404,
+                headers,
+                body: JSON.stringify({ error: '사용자의 FCM 토큰이 없습니다.' })
+            };
+        }
+
+        const tokenData = tokenSnapshot.val();
+        if (!tokenData || !tokenData.token) {
+            return {
+                statusCode: 404,
+                headers,
+                body: JSON.stringify({ error: 'FCM 토큰이 유효하지 않습니다.' })
             };
         }
 
         // 메시지 구성
         const message = {
+            token: tokenData.token,
             notification: {
                 title,
                 body
             },
-            token,
+            data: data || {},
             webpush: {
+                headers: {
+                    Urgency: 'high'
+                },
                 notification: {
                     icon: '/icon.png',
                     badge: '/icon.png',
@@ -97,10 +123,12 @@ exports.handler = async function(event, context) {
                     ]
                 },
                 fcmOptions: {
-                    link: '/'
+                    link: data?.url || '/'
                 }
             }
         };
+
+        console.log('Sending FCM message:', JSON.stringify(message, null, 2));
 
         // FCM으로 메시지 발송
         const response = await admin.messaging().send(message);
@@ -116,7 +144,11 @@ exports.handler = async function(event, context) {
         return {
             statusCode: 500,
             headers,
-            body: JSON.stringify({ error: error.message })
+            body: JSON.stringify({ 
+                error: error.message,
+                details: error.stack,
+                code: error.code
+            })
         };
     }
 }; 
