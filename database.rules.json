@@ -1,25 +1,22 @@
 {
   "rules": {
+    ".read": "auth != null",
+    ".write": "auth != null",
     "users": {
       ".read": true,
-      ".write": true,
-      "$userId": {
-        ".read": true,
-        ".write": true,
-        ".validate": "newData.hasChildren(['sessionId', 'lastSeen', 'active'])",
+      "$uid": {
+        ".write": "auth != null && auth.uid === $uid",
         "sessionId": { ".validate": "newData.isString()" },
-        "lastSeen": { ".validate": "newData.isNumber() && newData.val() <= now" },
+        "lastSeen": { ".validate": "newData.isNumber()" },
         "active": { ".validate": "newData.isBoolean()" }
       }
     },
     "tokens": {
-      ".read": true,
-      ".write": true,
-      "$userId": {
-        ".read": true,
-        ".write": true,
-        ".validate": "newData.hasChildren(['token'])",
-        "token": { ".validate": "newData.isString()" }
+      ".read": "auth != null",
+      "$uid": {
+        ".write": "auth != null && auth.uid === $uid",
+        "token": { ".validate": "newData.isString()" },
+        "updatedAt": { ".validate": "newData.isNumber()" }
       }
     }
   }
