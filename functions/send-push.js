@@ -21,6 +21,18 @@ if (!admin.apps.length) {
         throw new Error('FIREBASE_PRIVATE_KEY가 설정되지 않았습니다.');
     }
 
+    // 필수 환경 변수 확인
+    const requiredEnvVars = [
+        'FIREBASE_PROJECT_ID',
+        'FIREBASE_CLIENT_EMAIL',
+        'FIREBASE_DATABASE_URL'
+    ];
+
+    const missingEnvVars = requiredEnvVars.filter(varName => !process.env[varName]);
+    if (missingEnvVars.length > 0) {
+        throw new Error(`Missing required environment variables: ${missingEnvVars.join(', ')}`);
+    }
+
     try {
         admin.initializeApp({
             credential: admin.credential.cert({
@@ -28,9 +40,10 @@ if (!admin.apps.length) {
                 clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
                 privateKey: privateKey
             }),
-            databaseURL: process.env.FIREBASE_DATABASE_URL
+            databaseURL: `https://${process.env.FIREBASE_PROJECT_ID}-default-rtdb.firebaseio.com`
         });
         console.log('Firebase Admin 초기화 성공');
+        console.log('Database URL:', `https://${process.env.FIREBASE_PROJECT_ID}-default-rtdb.firebaseio.com`);
     } catch (error) {
         console.error('Firebase Admin 초기화 실패:', error);
         throw error;
