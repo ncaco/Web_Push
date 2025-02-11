@@ -45,10 +45,10 @@ app.get('/api/vapid-key', (req, res) => {
 app.post('/.netlify/functions/send-push', async (req, res) => {
     try {
         const { userId, title, body, data } = req.body;
-        console.log('Received push request:', req.body);
+        console.log('Received push request:', { userId, title, body, data });
 
         if (!userId || !title || !body) {
-            return res.status(400).json({ error: '필수 파라미터가 누락되었습니다.', body: req.body });
+            return res.status(400).json({ error: '필수 파라미터가 누락되었습니다.' });
         }
 
         // 사용자의 FCM 토큰 가져오기
@@ -59,14 +59,14 @@ app.post('/.netlify/functions/send-push', async (req, res) => {
             return res.status(404).json({ error: '사용자의 FCM 토큰이 없습니다.' });
         }
 
-        const { token } = tokenSnapshot.val();
-        if (!token) {
+        const tokenData = tokenSnapshot.val();
+        if (!tokenData || !tokenData.token) {
             return res.status(404).json({ error: 'FCM 토큰이 유효하지 않습니다.' });
         }
 
         // 메시지 구성
         const message = {
-            token: token, // 토큰을 최상위 레벨에 배치
+            token: tokenData.token,
             notification: {
                 title,
                 body
@@ -76,6 +76,9 @@ app.post('/.netlify/functions/send-push', async (req, res) => {
                 linkType: data?.linkType || 'current'
             },
             webpush: {
+                headers: {
+                    Urgency: 'high'
+                },
                 notification: {
                     icon: '/icon.png',
                     badge: '/icon.png',
