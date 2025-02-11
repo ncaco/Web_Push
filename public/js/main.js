@@ -267,7 +267,12 @@ function showUserStatus(userId) {
 // 푸시 메시지 발송
 async function sendPushNotification(userId, title, body, url, linkType) {
     try {
-        console.log('Sending push notification:', { userId, title, body, url, linkType });
+        const data = {
+            url: url || '/',
+            linkType: linkType || 'current'
+        };
+        
+        console.log('Sending push notification:', { userId, title, body, data });
         
         const response = await fetch('/.netlify/functions/send-push', {
             method: 'POST',
@@ -278,19 +283,18 @@ async function sendPushNotification(userId, title, body, url, linkType) {
                 userId,
                 title,
                 body,
-                data: {
-                    url,
-                    linkType
-                }
+                data
             })
         });
 
+        const result = await response.json();
         if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.error || '푸시 메시지 발송에 실패했습니다.');
+            throw new Error(result.error || '푸시 메시지 발송에 실패했습니다.');
         }
 
+        console.log('Push notification sent:', result);
         alert('푸시 메시지가 발송되었습니다.');
+        
         // 입력 필드 초기화
         pushTitle.value = '';
         pushBody.value = '';

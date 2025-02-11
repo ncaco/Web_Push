@@ -52,16 +52,14 @@ app.post('/.netlify/functions/send-push', async (req, res) => {
         }
 
         // 사용자의 FCM 토큰 가져오기
-        const tokenSnapshot = await admin.database().ref(`tokens/${userId}`).once('value');
-        console.log('Token snapshot:', tokenSnapshot.val());
-        
-        if (!tokenSnapshot.exists()) {
-            return res.status(404).json({ error: '사용자의 FCM 토큰이 없습니다.' });
-        }
-
+        const tokenRef = admin.database().ref(`tokens/${userId}`);
+        const tokenSnapshot = await tokenRef.once('value');
         const tokenData = tokenSnapshot.val();
-        if (!tokenData || !tokenData.token) {
-            return res.status(404).json({ error: 'FCM 토큰이 유효하지 않습니다.' });
+        
+        console.log('Token data:', tokenData);
+
+        if (!tokenSnapshot.exists() || !tokenData || !tokenData.token) {
+            return res.status(404).json({ error: '사용자의 FCM 토큰이 없습니다.' });
         }
 
         // 메시지 구성
@@ -71,10 +69,7 @@ app.post('/.netlify/functions/send-push', async (req, res) => {
                 title,
                 body
             },
-            data: {
-                url: data?.url || '/',
-                linkType: data?.linkType || 'current'
-            },
+            data: data || {},
             webpush: {
                 headers: {
                     Urgency: 'high'
@@ -93,11 +88,14 @@ app.post('/.netlify/functions/send-push', async (req, res) => {
                             title: '닫기'
                         }
                     ]
+                },
+                fcmOptions: {
+                    link: data?.url || '/'
                 }
             }
         };
 
-        console.log('Sending FCM message:', message);
+        console.log('Sending FCM message:', JSON.stringify(message, null, 2));
 
         // FCM으로 메시지 발송
         const response = await admin.messaging().send(message);
@@ -107,8 +105,9 @@ app.post('/.netlify/functions/send-push', async (req, res) => {
     } catch (error) {
         console.error('푸시 메시지 발송 실패:', error);
         res.status(500).json({ 
-            error: error.message || '푸시 메시지 발송에 실패했습니다.',
-            details: error.stack
+            error: error.message,
+            details: error.stack,
+            code: error.code
         });
     }
 });
