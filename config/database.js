@@ -30,7 +30,8 @@ const upsertUser = async (userId, userData) => {
     const validData = {
         sessionId: userData.sessionId,
         lastSeen: userData.lastSeen || Date.now(),
-        active: userData.active || true
+        active: userData.active || true,
+        timestamp: Date.now()
     };
     await set(userRef, validData);
     return validData;
@@ -69,7 +70,8 @@ const getAllTokens = async () => {
 const upsertToken = async (userId, tokenData) => {
     const tokenRef = ref(rtdb, `tokens/${userId}`);
     const validData = {
-        token: tokenData.token
+        token: tokenData.token,
+        timestamp: Date.now()
     };
     await set(tokenRef, validData);
     return validData;

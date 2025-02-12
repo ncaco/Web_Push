@@ -4,19 +4,23 @@
     ".write": "auth != null",
     "users": {
       ".read": true,
+      ".indexOn": "timestamp",
       "$uid": {
         ".write": "auth != null && auth.uid === $uid",
         "sessionId": { ".validate": "newData.isString()" },
         "lastSeen": { ".validate": "newData.isNumber()" },
-        "active": { ".validate": "newData.isBoolean()" }
+        "active": { ".validate": "newData.isBoolean()" },
+        "timestamp": { ".validate": "newData.isNumber()" }
       }
     },
     "tokens": {
       ".read": "auth != null",
+      ".indexOn": "timestamp",
       "$uid": {
         ".write": "auth != null && auth.uid === $uid",
         "token": { ".validate": "newData.isString()" },
-        "updatedAt": { ".validate": "newData.isNumber()" }
+        "updatedAt": { ".validate": "newData.isNumber()" },
+        "timestamp": { ".validate": "newData.isNumber()" }
       }
     }
   }

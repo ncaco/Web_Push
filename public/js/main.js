@@ -1,5 +1,5 @@
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
-import { getDatabase, ref, onValue, get, set, update } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js';
+import { getDatabase, ref, onValue, get, set, update, query, orderByChild, endAt, remove } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js';
 import { getMessaging, getToken } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging.js';
 import { getAuth, signInAnonymously } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
 
@@ -194,7 +194,8 @@ async function updateUserStatus(userId, isActive) {
     const userData = {
         sessionId,
         lastSeen: Date.now(),
-        active: isActive
+        active: isActive,
+        timestamp: Date.now()
     };
 
     if (!snapshot.exists()) {
@@ -210,7 +211,8 @@ async function updateUserStatus(userId, isActive) {
 async function updateUserLastSeen(userId) {
     const userRef = ref(db, `users/${userId}`);
     await update(userRef, {
-        lastSeen: Date.now()
+        lastSeen: Date.now(),
+        timestamp: Date.now()
     });
 }
 
@@ -340,5 +342,44 @@ async function initialize() {
         console.error('초기화 실패:', error);
     }
 }
+
+// 오래된 데이터 정리
+async function cleanupOldData() {
+    const oneHourAgo = Date.now() - (60 * 60 * 1000); // 1시간 전
+    
+    try {
+        // users 데이터 정리
+        const usersRef = ref(db, 'users');
+        const oldUsersQuery = query(usersRef, orderByChild('timestamp'), endAt(oneHourAgo));
+        const oldUsersSnapshot = await get(oldUsersQuery);
+        
+        // tokens 데이터 정리
+        const tokensRef = ref(db, 'tokens');
+        const oldTokensQuery = query(tokensRef, orderByChild('timestamp'), endAt(oneHourAgo));
+        const oldTokensSnapshot = await get(oldTokensQuery);
+
+        // 삭제 작업 수행
+        const deletePromises = [];
+        
+        oldUsersSnapshot.forEach(snapshot => {
+            deletePromises.push(remove(snapshot.ref));
+        });
+        
+        oldTokensSnapshot.forEach(snapshot => {
+            deletePromises.push(remove(snapshot.ref));
+        });
+        
+        await Promise.all(deletePromises);
+        console.log('데이터 정리 완료');
+    } catch (error) {
+        console.error('데이터 정리 중 오류 발생:', error);
+    }
+}
+
+// 주기적으로 데이터 정리 실행 (1시간마다)
+setInterval(cleanupOldData, 60 * 60 * 1000);
+
+// 페이지 로드 시 한 번 실행
+cleanupOldData();
 
 initialize(); 
